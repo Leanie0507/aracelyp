@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>¡Feliz Cumpleaños Aracely!</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f5f0ff; /* Mantiene el fondo con tono lila suave */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            overflow-x: hidden;
+            position: relative;
+        }
+        .container {
+            background-color: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(147, 112, 219, 0.3); /* Sombra con tono lila */
+            padding: 30px;
+            width: 90%;
+            max-width: 800px;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+            margin: 20px 0;
+        }
+        .modal-content {
+            background-color: white;
+            padding: 30px;
+            border-radius: 15px;
+            width: 100%;
+            max-height: 80vh;
+            text-align: center;
+            position: relative;
+            animation: scaleIn 0.5s;
+            overflow-y: auto;
+        }
+        .birthday-message {
+            font-size: clamp(1.5rem, 5vw, 2.5rem);
+            color: #8a2be2; /* Mensaje de cumpleaños en lila */
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(138, 43, 226, 0.3);
+            font-weight: bold;
+        }
+        .gift-message {
+            background-color: #f5f0ff;
+            border-left: 5px solid #8a2be2;
+            padding: 15px;
+            margin: 20px 0;
+            text-align: left;
+            border-radius: 0 8px 8px 0;
+            box-shadow: 0 4px 8px rgba(138, 43, 226, 0.2);
+            line-height: 1.6;
+            font-size: clamp(1rem, 2vw, 1.1rem);
+        }
+        .gift-message p {
+            margin: 10px 0;
+        }
+        .gift-message-highlight {
+            font-weight: bold;
+            color: #8a2be2;
+        }
+        .image-placeholder {
+            width: 100%;
+            max-height: 300px;
+            margin: 20px 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(138, 43, 226, 0.2);
+        }
+        .image-placeholder img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+        .confetti {
+            position: fixed;
+            width: 15px;
+            height: 15px;
+            opacity: 0;
+            z-index: 10;
+            pointer-events: none;
+            top: -50px; /* Asegura que el confeti comience fuera de la pantalla */
+        }
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+        .button-container {
+            margin-top: 30px;
+        }
+        .continue-button {
+            background-color: #8a2be2;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            padding: 12px 30px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 8px rgba(138, 43, 226, 0.3);
+            font-weight: bold;
+            letter-spacing: 0.5px;
+        }
+        .continue-button:hover {
+            background-color: #7821c9;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(138, 43, 226, 0.4);
+        }
+        @keyframes scaleIn {
+            from { opacity: 0; transform: scale(0.8); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        @keyframes fallingConfetti {
+            0% { 
+                transform: translateY(0) rotate(0deg); 
+                opacity: 1; 
+            }
+            100% { 
+                transform: translateY(calc(100vh + 100px)) rotate(360deg); 
+                opacity: 0; 
+            }
+        }
+        /* Media queries para responsive */
+        @media (max-width: 768px) {
+            .container {
+                width: 95%;
+                padding: 20px;
+            }
+            .modal-content {
+                padding: 20px 15px;
+            }
+        }
+        @media (max-width: 480px) {
+            .gift-message {
+                padding: 12px;
+            }
+            .container {
+                padding: 15px;
+            }
+            .modal-content {
+                padding: 15px 10px;
+            }
+        }
+        /* Efectos de glow para el mensaje de cumpleaños */
+        .glow {
+            text-shadow: 0 0 10px #8a2be2, 0 0 20px #9370db, 0 0 30px #ba55d3;
+            animation: glowing 2s infinite;
+        }
+        @keyframes glowing {
+            0% { text-shadow: 0 0 10px #8a2be2, 0 0 20px #9370db; }
+            50% { text-shadow: 0 0 20px #8a2be2, 0 0 30px #9370db, 0 0 40px #ba55d3; }
+            100% { text-shadow: 0 0 10px #8a2be2, 0 0 20px #9370db; }
+        }
+        /* Nuevos estilos para mejorar la apariencia */
+        .footer-message {
+            margin-top: 20px;
+            font-style: italic;
+            color: #666;
+            font-size: 0.9rem;
+        }
+        .name-signature {
+            color: #8a2be2;
+            font-weight: bold;
+            margin-top: 25px;
+            letter-spacing: 1px;
+            font-size: 1.2rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Audio para el mensaje final -->
+    <audio id="giftMusic" loop>
+        <source src="acuerdas.mp3" type="audio/mp3">
+        Tu navegador no soporta el elemento de audio.
+    </audio>
+
+    <div class="container">
+        <div class="modal-content">
+            <h2 class="birthday-message glow">¡Felices 30, hermana!</h2>
+            <p class="gift-message-highlight">Para la diseñadora gráfica más talentosa y creativa que conozco.</p>
+            <p>Toca la pantalla para la canción :)</p>
+            
+            <div class="gift-message">
+                <p>Hoy no solo celebramos que cumples "3 décadas de ser la consentida", sino todos los momentos únicos que solo nosotras entendemos. También que haz madurado y que me caes mejor que antes (tu yo adolescente). </p>
+                <p><span class="gift-message-highlight">Recuerdas cuando:</span></p>
+                <ul>
+                    <li>Me golpeabas con la escoba, pero igual despues empezabamos a llorar. </li>
+                    <li>Hicimos la coreografía épica con la canción de Nelly Furtado 🎶</li>
+                    <li>Regresábamos solas en el carro y me cargabas porque ya no teniamos para el pasaje. 🚗</li>
+                    <li>Nuestro álbum de Los Padrinos Mágicos que coleccionamos y despues comprábamos nuestra mini papita rellena</li>
+                  </ul>
+                <p>Gracias por ser mi cómplice en todo, desde ver series y dibujitos de niñas en la tele a escondidas de mi mamá hasta seguir siendo mi "gil"</p>
+                <p><span class="gift-message-highlight">Gracias por todas las veces que me haz ayudado y los momentos que haz estado conmigo desde que nací</span>, las veces que me cuidaste y las cosas que me enseñaste, que haría yo sin ti gil nada.</p>
+                <p>Espero ahora me ayudes a saber como son los 30, y a pesar que creas que no haz logrado nada sí haz logrado mucho y <span class="gift-message-highlight">ya no seas tan exigente contigo y haz que ese miedo se vaya de tu lado.</span> Tú puedes yo confío en ti.</p>
+                
+            </div>
+            
+            <div class="image-placeholder">                
+                <img src="12.JPG" alt="Feliz cumpleaños">
+            </div>
+            
+            <p class="gift-message-highlight">Espero que este pequeño detalle digital te haya sacado una sonrisa o te haya gustado porque no habrá más, ya que estoy misia</p>
+            
+            <p class="name-signature">Con cariño, la mejor programadora ever, Angie obvio ♥</p>
+
+            <div class="button-container">
+                <button id="continueButton" class="continue-button">Volver al Inicio</button>
+            </div>
+            
+            
+        </div>
+    </div>
+
+    <script>
+        // Reproducir música cuando carga la página
+        window.onload = function() {
+            const giftMusic = document.getElementById('giftMusic');
+            const continueButton = document.getElementById('continueButton');
+            
+            // Intentar reproducir la música cuando el usuario interactúa con la página
+            document.addEventListener('click', function() {
+                giftMusic.play().catch(e => {
+                    console.log("Error reproduciendo música automáticamente:", e);
+                });
+            }, { once: true });
+            
+            // Crear efecto de confeti continuo
+            createConfetti();
+            
+            // Configurar confeti continuo
+            setInterval(function() {
+                createConfettiGroup(15); // Crear 15 confetis cada 2 segundos
+            }, 2000);
+            
+            // Configurar el botón continuar
+            continueButton.addEventListener('click', function() {
+                window.location.href = 'index.html';
+            });
+        };
+        
+        // Función principal para crear confeti inicial
+        function createConfetti() {
+            createConfettiGroup(100); // Crear 100 confetis iniciales
+        }
+        
+        // Función para crear grupos de confeti
+        function createConfettiGroup(count) {
+            // Colores más variados y vibrantes para el confeti
+            const colors = [
+                '#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF', '#00FFFF', // Colores brillantes
+                '#8a2be2', '#9370db', '#ba55d3', '#dda0dd', '#ee82ee', '#da70d6', // Tonos lilas
+                '#FFA500', '#FF4500', '#FF1493', '#32CD32', '#1E90FF', '#FFD700'  // Colores adicionales
+            ];
+            
+            for (let i = 0; i < count; i++) {
+                const confetti = document.createElement('div');
+                confetti.classList.add('confetti');
+                
+                // Variación en formas: círculos, cuadrados y triángulos
+                const shape = Math.floor(Math.random() * 3);
+                if (shape === 0) {
+                    // Círculo
+                    confetti.style.borderRadius = '50%';
+                } else if (shape === 1) {
+                    // Cuadrado
+                    confetti.style.borderRadius = '0';
+                } else {
+                    // Triángulo
+                    confetti.style.width = '0';
+                    confetti.style.height = '0';
+                    confetti.style.borderLeft = '8px solid transparent';
+                    confetti.style.borderRight = '8px solid transparent';
+                    confetti.style.borderBottom = '15px solid ' + colors[Math.floor(Math.random() * colors.length)];
+                    confetti.style.backgroundColor = 'transparent';
+                }
+                
+                if (shape !== 2) {
+                    confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                }
+                
+                // Posición aleatoria en el eje X y asegurar que empiece desde arriba de la pantalla
+                confetti.style.left = `${Math.random() * 100}%`;
+                confetti.style.top = `-50px`;
+                
+                // Tamaño aleatorio
+                const size = Math.random() * 12 + 8;
+                if (shape !== 2) {
+                    confetti.style.width = `${size}px`;
+                    confetti.style.height = `${size}px`;
+                }
+                
+                // Animación con duración variable
+                const duration = Math.random() * 4 + 3;
+                confetti.style.animation = `fallingConfetti ${duration}s ease-out forwards`;
+                confetti.style.animationDelay = `${Math.random() * 2}s`;
+                
+                document.body.appendChild(confetti);
+                
+                // Eliminar confeti después de que termine la animación para evitar sobrecarga
+                setTimeout(() => {
+                    confetti.remove();
+                }, (duration + 2) * 1000);
+            }
+        }
+    </script>
+</body>
+</html>

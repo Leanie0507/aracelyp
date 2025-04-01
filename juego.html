@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pacman-like Game</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #000;
+            flex-direction: column;
+            font-family: Arial, sans-serif;
+            color: white;
+            overflow: hidden;
+        }
+        
+        #game-container {
+            position: relative;
+            width: 90vmin;
+            height: 90vmin;
+            max-width: 500px;
+            max-height: 500px;
+            background-color: #000;
+            border: 2px solid #00F;
+            overflow: hidden;
+        }
+        
+        #pacman {
+            position: absolute;
+            width: 5%;
+            height: 5%;
+            background-color: #FF0;
+            border-radius: 50%;
+            z-index: 2;
+        }
+        
+        .ghost {
+            position: absolute;
+            width: 5%;
+            height: 5%;
+            border-radius: 50% 50% 0 0;
+            z-index: 1;
+        }
+        
+        .dot {
+            position: absolute;
+            width: 1.5%;
+            height: 1.5%;
+            background-color: #FFF;
+            border-radius: 50%;
+            z-index: 0;
+        }
+        
+        #score {
+            margin-top: 20px;
+            font-size: 24px;
+        }
+        
+        #game-over {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 36px;
+            color: red;
+            display: none;
+            z-index: 10;
+        }
+        
+        #win {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 36px;
+            color: yellow;
+            display: none;
+            z-index: 10;
+        }
+        
+        #controls {
+            display: none;
+            margin-top: 20px;
+            width: 90vmin;
+            max-width: 300px;
+        }
+        
+        #controls button {
+            width: 60px;
+            height: 60px;
+            font-size: 24px;
+            background-color: #333;
+            color: white;
+            border: 1px solid #555;
+            border-radius: 10px;
+            margin: 5px;
+            cursor: pointer;
+            touch-action: manipulation;
+        }
+        
+        #start-button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 18px;
+            background-color: #00F;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        @media (max-width: 768px) {
+            #controls {
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                grid-template-rows: repeat(3, 1fr);
+                justify-items: center;
+                align-items: center;
+            }
+            
+            #up-button { grid-area: 1 / 2 / 2 / 3; }
+            #left-button { grid-area: 2 / 1 / 3 / 2; }
+            #right-button { grid-area: 2 / 3 / 3 / 4; }
+            #down-button { grid-area: 3 / 2 / 4 / 3; }
+        }
+    </style>
+</head>
+<body>
+    <h1>Minijueguito Pac-man</h1>
+    <p>Junta 30 puntos para continuar y si te comes fantasmas pierdes 10 puntos. Por cierto haz click en el botón que dice iniciar duh!</p>
+    <div id="game-container">
+        <div id="pacman"></div>
+        <div id="game-over">GAME OVER</div>
+        <div id="win">¡GANASTE!</div>
+    </div>
+    <div id="score">Puntos: 0</div>
+    
+    <div id="controls">
+        <button id="up-button">↑</button>
+        <button id="left-button">←</button>
+        <button id="right-button">→</button>
+        <button id="down-button">↓</button>
+    </div>
+    
+    <button id="start-button">Iniciar</button>
+    
+    <audio id="background-music" loop>
+        <source src="juego.mp3" type="audio/mpeg">
+        Tu navegador no soporta el elemento de audio.
+    </audio>
+    
+    <audio id="eat-sound">
+        <source src="https://assets.mixkit.co/sfx/preview/mixkit-arcade-game-jump-coin-216.mp3" type="audio/mpeg">
+        Tu navegador no soporta el elemento de audio.
+    </audio>
+    
+    <audio id="win-sound">
+        <source src="https://assets.mixkit.co/sfx/preview/mixkit-winning-chimes-2015.mp3" type="audio/mpeg">
+        Tu navegador no soporta el elemento de audio.
+    </audio>
+    
+    <audio id="ghost-collision-sound">
+        <source src="https://assets.mixkit.co/sfx/preview/mixkit-retro-arcade-game-over-470.mp3" type="audio/mpeg">
+        Tu navegador no soporta el elemento de audio.
+    </audio>
+    
+    <script>
+        // Elementos del juego
+        const gameContainer = document.getElementById('game-container');
+        const pacman = document.getElementById('pacman');
+        const scoreDisplay = document.getElementById('score');
+        const gameOverDisplay = document.getElementById('game-over');
+        const winDisplay = document.getElementById('win');
+        const bgMusic = document.getElementById('background-music');
+        const eatSound = document.getElementById('eat-sound');
+        const winSound = document.getElementById('win-sound');
+        const ghostCollisionSound = document.getElementById('ghost-collision-sound');
+        const startButton = document.getElementById('start-button');
+        
+        // Botones de control para móviles
+        const upButton = document.getElementById('up-button');
+        const downButton = document.getElementById('down-button');
+        const leftButton = document.getElementById('left-button');
+        const rightButton = document.getElementById('right-button');
+        
+        // Variables del juego
+        let score = 0;
+        let gameRunning = false;
+        let pacmanX, pacmanY;
+        let direction = 'right';
+        let nextDirection = 'right';
+        const containerWidth = gameContainer.clientWidth;
+        const containerHeight = gameContainer.clientHeight;
+        const pacmanSize = containerWidth * 0.05;
+        const gridSize = containerWidth * 0.05;
+        const dotSize = containerWidth * 0.015;
+        
+        // Ajustar tamaños basados en el tamaño del contenedor
+        function updateSizes() {
+            pacman.style.width = `${pacmanSize}px`;
+            pacman.style.height = `${pacmanSize}px`;
+            
+            ghosts.forEach(ghost => {
+                if (ghost.element) {
+                    ghost.element.style.width = `${pacmanSize}px`;
+                    ghost.element.style.height = `${pacmanSize}px`;
+                }
+            });
+            
+            dots.forEach(dot => {
+                if (dot.element) {
+                    dot.element.style.width = `${dotSize}px`;
+                    dot.element.style.height = `${dotSize}px`;
+                }
+            });
+        }
+        
+        // Fantasmas
+        const ghosts = [
+            { x: 0, y: 0, color: '#F00', speedX: 1, speedY: 0, element: null },
+            { x: 0, y: 0, color: '#0FF', speedX: -1, speedY: 0, element: null },
+            { x: 0, y: 0, color: '#F0F', speedX: 0, speedY: -1, element: null },
+            { x: 0, y: 0, color: '#FF0', speedX: 0, speedY: 1, element: null }
+        ];
+        
+        // Puntos
+        const dots = [];
+        const dotCount = 50;
+        
+        // Inicializar puntos
+        function initDots() {
+            for (let i = 0; i < dotCount; i++) {
+                createDot();
+            }
+        }
+        
+        function createDot() {
+            const dot = document.createElement('div');
+            dot.className = 'dot';
+            
+            let x, y, overlapping;
+            
+            do {
+                overlapping = false;
+                x = Math.floor(Math.random() * ((containerWidth - dotSize) / gridSize)) * gridSize;
+                y = Math.floor(Math.random() * ((containerHeight - dotSize) / gridSize)) * gridSize;
+                
+                // Verificar que no esté muy cerca de Pacman al inicio
+                if (Math.abs(x - pacmanX) < containerWidth * 0.1 && Math.abs(y - pacmanY) < containerHeight * 0.1) {
+                    overlapping = true;
+                }
+                
+                // Verificar que no se superponga con otros puntos
+                for (const existingDot of dots) {
+                    if (Math.abs(x - existingDot.x) < containerWidth * 0.05 && Math.abs(y - existingDot.y) < containerHeight * 0.05) {
+                        overlapping = true;
+                        break;
+                    }
+                }
+            } while (overlapping);
+            
+            dot.style.left = `${x}px`;
+            dot.style.top = `${y}px`;
+            dot.style.width = `${dotSize}px`;
+            dot.style.height = `${dotSize}px`;
+            
+            gameContainer.appendChild(dot);
+            dots.push({ x, y, element: dot });
+        }
+        
+        // Inicializar fantasmas
+        function initGhosts() {
+            // Posiciones iniciales ajustadas al tamaño del contenedor
+            const positions = [
+                { x: containerWidth * 0.25, y: containerHeight * 0.25 },
+                { x: containerWidth * 0.75, y: containerHeight * 0.25 },
+                { x: containerWidth * 0.25, y: containerHeight * 0.75 },
+                { x: containerWidth * 0.75, y: containerHeight * 0.75 }
+            ];
+            
+            ghosts.forEach((ghost, index) => {
+                ghost.x = positions[index].x;
+                ghost.y = positions[index].y;
+                
+                if (ghost.element) {
+                    gameContainer.removeChild(ghost.element);
+                }
+                
+                const ghostElement = document.createElement('div');
+                ghostElement.className = 'ghost';
+                ghostElement.style.backgroundColor = ghost.color;
+                ghostElement.style.left = `${ghost.x}px`;
+                ghostElement.style.top = `${ghost.y}px`;
+                ghostElement.style.width = `${pacmanSize}px`;
+                ghostElement.style.height = `${pacmanSize}px`;
+                
+                // Ojos de los fantasmas ajustados al tamaño
+                const eyeSize = pacmanSize * 0.3;
+                const pupilSize = pacmanSize * 0.15;
+                ghostElement.innerHTML = `
+                    <div style="position: absolute; width: ${eyeSize}px; height: ${eyeSize}px; background: white; border-radius: 50%; top: ${pacmanSize * 0.25}px; left: ${pacmanSize * 0.15}px;"></div>
+                    <div style="position: absolute; width: ${eyeSize}px; height: ${eyeSize}px; background: white; border-radius: 50%; top: ${pacmanSize * 0.25}px; left: ${pacmanSize * 0.55}px;"></div>
+                    <div style="position: absolute; width: ${pupilSize}px; height: ${pupilSize}px; background: black; border-radius: 50%; top: ${pacmanSize * 0.3}px; left: ${pacmanSize * 0.25}px;"></div>
+                    <div style="position: absolute; width: ${pupilSize}px; height: ${pupilSize}px; background: black; border-radius: 50%; top: ${pacmanSize * 0.3}px; left: ${pacmanSize * 0.65}px;"></div>
+                `;
+                
+                gameContainer.appendChild(ghostElement);
+                ghost.element = ghostElement;
+            });
+        }
+        
+        // Mover Pacman
+        function movePacman() {
+            // Cambiar dirección si es posible
+            if (canMove(nextDirection)) {
+                direction = nextDirection;
+            }
+            
+            // Velocidad basada en el tamaño del contenedor
+            const speed = containerWidth * 0.005;
+            
+            // Mover según la dirección actual
+            switch (direction) {
+                case 'up':
+                    if (canMove('up')) pacmanY -= speed;
+                    break;
+                case 'down':
+                    if (canMove('down')) pacmanY += speed;
+                    break;
+                case 'left':
+                    if (canMove('left')) pacmanX -= speed;
+                    break;
+                case 'right':
+                    if (canMove('right')) pacmanX += speed;
+                    break;
+            }
+            
+            // Warp a través de los bordes
+            if (pacmanX < -pacmanSize) pacmanX = containerWidth;
+            if (pacmanX > containerWidth) pacmanX = -pacmanSize;
+            if (pacmanY < -pacmanSize) pacmanY = containerHeight;
+            if (pacmanY > containerHeight) pacmanY = -pacmanSize;
+            
+            // Actualizar posición en pantalla
+            pacman.style.left = `${pacmanX}px`;
+            pacman.style.top = `${pacmanY}px`;
+            
+            // Animación de boca y rotación según dirección
+            animatePacman();
+            
+            // Comprobar colisión con puntos
+            checkDotCollision();
+            
+            // Comprobar colisión con fantasmas
+            checkGhostCollision();
+        }
+        
+        // Comprobar si puede moverse en una dirección
+        function canMove(dir) {
+            switch (dir) {
+                case 'up':
+                    return pacmanY > -pacmanSize/2;
+                case 'down':
+                    return pacmanY < containerHeight - pacmanSize/2;
+                case 'left':
+                    return pacmanX > -pacmanSize/2;
+                case 'right':
+                    return pacmanX < containerWidth - pacmanSize/2;
+                default:
+                    return true;
+            }
+        }
+        
+        // Animación de boca de Pacman mejorada
+        let mouthAngle = 30;
+        let mouthDirection = 5;
+        function animatePacman() {
+            // Animación de apertura y cierre de boca
+            mouthAngle += mouthDirection;
+            if (mouthAngle >= 40 || mouthAngle <= 5) {
+                mouthDirection *= -1;
+            }
+            
+            // Rotación según la dirección
+            let rotation = 0;
+            switch (direction) {
+                case 'up': rotation = 270; break;
+                case 'down': rotation = 90; break;
+                case 'left': rotation = 180; break;
+                case 'right': rotation = 0; break;
+            }
+            
+            // Aplicar la animación de la boca y rotación
+            pacman.style.clipPath = `polygon(50% 50%, ${50 - mouthAngle/2}% 0%, ${50 + mouthAngle/2}% 0%, 50% 50%, ${50 + mouthAngle/2}% 100%, ${50 - mouthAngle/2}% 100%)`;
+            pacman.style.transform = `rotate(${rotation}deg)`;
+        }
+        
+        // Mover fantasmas
+        function moveGhosts() {
+            ghosts.forEach(ghost => {
+                // Velocidad basada en el tamaño del contenedor
+                const speed = containerWidth * 0.002;
+                
+                // Cambiar dirección aleatoriamente o si choca con los bordes
+                if (Math.random() < 0.02 || 
+                    ghost.x <= 0 || ghost.x >= containerWidth - pacmanSize ||
+                    ghost.y <= 0 || ghost.y >= containerHeight - pacmanSize) {
+                    
+                    const directions = ['up', 'down', 'left', 'right'];
+                    const newDir = directions[Math.floor(Math.random() * directions.length)];
+                    
+                    if (newDir === 'up') {
+                        ghost.speedX = 0;
+                        ghost.speedY = -speed;
+                    } else if (newDir === 'down') {
+                        ghost.speedX = 0;
+                        ghost.speedY = speed;
+                    } else if (newDir === 'left') {
+                        ghost.speedX = -speed;
+                        ghost.speedY = 0;
+                    } else if (newDir === 'right') {
+                        ghost.speedX = speed;
+                        ghost.speedY = 0;
+                    }
+                }
+                
+                // Mover fantasma
+                ghost.x += ghost.speedX;
+                ghost.y += ghost.speedY;
+                
+                // Warp a través de los bordes
+                if (ghost.x < -pacmanSize) ghost.x = containerWidth;
+                if (ghost.x > containerWidth) ghost.x = -pacmanSize;
+                if (ghost.y < -pacmanSize) ghost.y = containerHeight;
+                if (ghost.y > containerHeight) ghost.y = -pacmanSize;
+                
+                // Actualizar posición en pantalla
+                ghost.element.style.left = `${ghost.x}px`;
+                ghost.element.style.top = `${ghost.y}px`;
+                
+                // Hacer que los ojos miren hacia donde va
+                const pupils = ghost.element.querySelectorAll('div:nth-child(3), div:nth-child(4)');
+                let pupilOffsetX = 0;
+                let pupilOffsetY = 0;
+                
+                if (ghost.speedX > 0) pupilOffsetX = 2;
+                else if (ghost.speedX < 0) pupilOffsetX = -2;
+                
+                if (ghost.speedY > 0) pupilOffsetY = 2;
+                else if (ghost.speedY < 0) pupilOffsetY = -2;
+                
+                pupils.forEach(pupil => {
+                    const currentLeft = parseFloat(pupil.style.left);
+                    const currentTop = parseFloat(pupil.style.top);
+                    pupil.style.left = `${currentLeft + pupilOffsetX}px`;
+                    pupil.style.top = `${currentTop + pupilOffsetY}px`;
+                });
+            });
+        }
+        
+        // Comprobar colisión con puntos
+        function checkDotCollision() {
+            for (let i = dots.length - 1; i >= 0; i--) {
+                const dot = dots[i];
+                const distance = Math.sqrt(
+                    Math.pow(pacmanX + pacmanSize/2 - dot.x - dotSize/2, 2) + 
+                    Math.pow(pacmanY + pacmanSize/2 - dot.y - dotSize/2, 2)
+                );
+                
+                if (distance < pacmanSize/2 + dotSize/2) {
+                    // Eliminar punto
+                    gameContainer.removeChild(dot.element);
+                    dots.splice(i, 1);
+                    
+                    // Aumentar puntuación
+                    score++;
+                    scoreDisplay.textContent = `Puntos: ${score}`;
+                    
+                    // Reproducir sonido
+                    eatSound.currentTime = 0;
+                    eatSound.play();
+                    
+                    // Crear nuevo punto
+                    if (dots.length < dotCount - 10) {
+                        createDot();
+                    }
+                    
+                    // Comprobar si ganó
+                    if (score >= 30) {
+                        winGame();
+                    }
+                }
+            }
+        }
+        
+        // Comprobar colisión con fantasmas
+        function checkGhostCollision() {
+            for (const ghost of ghosts) {
+                const distance = Math.sqrt(
+                    Math.pow(pacmanX + pacmanSize/2 - ghost.x - pacmanSize/2, 2) + 
+                    Math.pow(pacmanY + pacmanSize/2 - ghost.y - pacmanSize/2, 2)
+                );
+                
+                if (distance < pacmanSize * 0.8 && gameRunning) {
+                    // En lugar de terminar el juego, solo quitar 10 puntos
+                    ghostCollisionSound.currentTime = 0;
+                    ghostCollisionSound.play();
+                    
+                    if (score >= 10) {
+                        score -= 10;
+                    } else {
+                        score = 0;
+                    }
+                    
+                    scoreDisplay.textContent = `Puntos: ${score}`;
+                    
+                    // Alejar el fantasma
+                    ghost.x = Math.random() * containerWidth * 0.8;
+                    ghost.y = Math.random() * containerHeight * 0.8;
+                    ghost.element.style.left = `${ghost.x}px`;
+                    ghost.element.style.top = `${ghost.y}px`;
+                    
+                    // Hacer parpadear a Pacman
+                    let blinks = 0;
+                    const blinkInterval = setInterval(() => {
+                        pacman.style.visibility = pacman.style.visibility === 'hidden' ? 'visible' : 'hidden';
+                        blinks++;
+                        if (blinks >= 6) {
+                            clearInterval(blinkInterval);
+                            pacman.style.visibility = 'visible';
+                        }
+                    }, 100);
+                    
+                    break;
+                }
+            }
+        }
+        
+        // Terminar juego
+        function endGame() {
+            gameRunning = false;
+            bgMusic.pause();
+            gameOverDisplay.style.display = 'block';
+        }
+        
+        // Ganar juego
+        function winGame() {
+            gameRunning = false;
+            bgMusic.pause();
+            winSound.play();
+            winDisplay.style.display = 'block';
+            setTimeout(function() {
+            window.location.href = 'regalo.html';
+            }, 2000); 
+        }
+       
+        // Eventos de teclado
+        document.addEventListener('keydown', (e) => {
+            if (!gameRunning) return;
+            
+            switch (e.key) {
+                case 'ArrowUp':
+                    nextDirection = 'up';
+                    break;
+                case 'ArrowDown':
+                    nextDirection = 'down';
+                    break;
+                case 'ArrowLeft':
+                    nextDirection = 'left';
+                    break;
+                case 'ArrowRight':
+                    nextDirection = 'right';
+                    break;
+                case ' ':
+                    if (!gameRunning) {
+                        resetGame();
+                    }
+                    break;
+            }
+        });
+        
+        // Eventos de botones táctiles
+        upButton.addEventListener('touchstart', () => { nextDirection = 'up'; });
+        downButton.addEventListener('touchstart', () => { nextDirection = 'down'; });
+        leftButton.addEventListener('touchstart', () => { nextDirection = 'left'; });
+        rightButton.addEventListener('touchstart', () => { nextDirection = 'right'; });
+        
+        // También permitir clic para dispositivos no táctiles
+        upButton.addEventListener('click', () => { nextDirection = 'up'; });
+        downButton.addEventListener('click', () => { nextDirection = 'down'; });
+        leftButton.addEventListener('click', () => { nextDirection = 'left'; });
+        rightButton.addEventListener('click', () => { nextDirection = 'right'; });
+        
+        // Botón de inicio/reinicio
+        startButton.addEventListener('click', resetGame);
+        
+        // Reiniciar juego
+        function resetGame() {
+            // Detener sonidos actuales
+            eatSound.pause();
+            ghostCollisionSound.pause();
+            winSound.pause();
+            
+            // Limpiar elementos existentes
+            dots.forEach(dot => {
+                if (dot.element && dot.element.parentNode) {
+                    gameContainer.removeChild(dot.element);
+                }
+            });
+            dots.length = 0;
+            
+            // Resetear variables
+            score = 0;
+            gameRunning = true;
+            pacmanX = containerWidth / 2 - pacmanSize / 2;
+            pacmanY = containerHeight / 2 - pacmanSize / 2;
+            direction = 'right';
+            nextDirection = 'right';
+            
+            // Actualizar Pacman
+            pacman.style.left = `${pacmanX}px`;
+            pacman.style.top = `${pacmanY}px`;
+            pacman.style.transform = 'rotate(0deg)';
+            
+            // Resetear displays
+            scoreDisplay.textContent = `Puntos: ${score}`;
+            gameOverDisplay.style.display = 'none';
+            winDisplay.style.display = 'none';
+            
+            // Inicializar o reiniciar elementos
+            initGhosts();
+            initDots();
+            
+            // Reproducir música
+            bgMusic.currentTime = 0;
+            bgMusic.play().catch(e => {
+                console.log("No se pudo reproducir la música automáticamente:", e);
+                // Mostrar mensaje para que el usuario haga clic para iniciar el audio
+                const audioMsg = document.createElement('div');
+                audioMsg.textContent = 'Haz clic aquí para iniciar el audio';
+                audioMsg.style.position = 'absolute';
+                audioMsg.style.top = '10px';
+                audioMsg.style.left = '50%';
+                audioMsg.style.transform = 'translateX(-50%)';
+                audioMsg.style.padding = '10px';
+                audioMsg.style.backgroundColor = '#00F';
+                audioMsg.style.cursor = 'pointer';
+                audioMsg.onclick = () => {
+                    bgMusic.play();
+                    document.body.removeChild(audioMsg);
+                };
+                document.body.appendChild(audioMsg);
+            });
+        }
+        
+        // Manejar cambios de tamaño de ventana
+        window.addEventListener('resize', () => {
+            // Actualizar tamaños basados en el nuevo tamaño del contenedor
+            updateSizes();
+        });
+        
+        // Iniciar juego
+        function initGame() {
+            pacmanX = containerWidth / 2 - pacmanSize / 2;
+            pacmanY = containerHeight / 2 - pacmanSize / 2;
+            
+            pacman.style.left = `${pacmanX}px`;
+            pacman.style.top = `${pacmanY}px`;
+            
+            updateSizes();
+            
+            // Bucle del juego
+            function gameLoop() {
+                if (gameRunning) {
+                    movePacman();
+                    moveGhosts();
+                }
+                requestAnimationFrame(gameLoop);
+            }
+            
+            gameLoop();
+        }
+        
+        // Prevenir el desplazamiento de la página en dispositivos móviles
+        document.addEventListener('touchmove', function(e) {
+            if (e.target.tagName !== 'INPUT') {
+                e.preventDefault();
+            }
+        }, { passive: false });
+        
+        // Iniciar cuando se carga la página
+        window.onload = initGame;
+    </script>
+</body>
+</html>

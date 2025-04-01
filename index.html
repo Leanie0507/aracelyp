@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>¿Aracely estás lista para tu regalo de cumpleaños?</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f5f0ff; /* Fondo con tono lila suave */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            overflow: hidden;
+            position: relative;
+        }
+        .container {
+            background-color: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(147, 112, 219, 0.3); /* Sombra con tono lila */
+            padding: 30px;
+            width: 90%;
+            max-width: 800px;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+            margin: 20px 0;
+        }
+        h1 {
+            color: #8a2be2; /* Púrpura/lila intenso */
+            margin-bottom: 30px;
+            font-size: 2em;
+        }
+        .question-container {
+            display: none;
+            margin-bottom: 20px;
+        }
+        .question-container.active {
+            display: block;
+            animation: fadeIn 0.5s;
+        }
+        .option {
+            display: block;
+            background-color: #e6e0ff; /* Fondo lila suave para opciones */
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .option:hover {
+            background-color: #d1c4f5; /* Lila más intenso al pasar el cursor */
+        }
+        .start-button, .submit-button {
+            background-color: #9370db; /* Botones color lila */
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.1em;
+            transition: background-color 0.3s;
+        }
+        .start-button:hover, .submit-button:hover {
+            background-color: #8a2be2; /* Lila más intenso al pasar el cursor */
+        }
+        .result-container {
+            display: none;
+            animation: scaleIn 0.8s;
+        }
+        .pacman-game {
+            display: none;
+            width: 100%;
+            height: 300px;
+            background-color: #3a1c71; /* Fondo púrpura oscuro para el juego */
+            position: relative;
+            margin: 20px 0;
+            overflow: hidden;
+            border-radius: 15px;
+        }
+        .pacman {
+            width: 50px;
+            height: 50px;
+            background-color: yellow;
+            border-radius: 50%;
+            position: absolute;
+            top: 50%;
+            left: 50px;
+            transform: translateY(-50%);
+            animation: chomp 0.3s infinite;
+        }
+        .ghost {
+            width: 40px;
+            height: 40px;
+            position: absolute;
+            border-radius: 50% 50% 0 0;
+            animation: moveGhost 6s infinite linear;
+        }
+        .dot {
+            width: 10px;
+            height: 10px;
+            background-color: white;
+            border-radius: 50%;
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes scaleIn {
+            from { opacity: 0; transform: scale(0.8); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        @keyframes chomp {
+            0% { clip-path: circle(50% at 50% 50%); }
+            50% { clip-path: polygon(100% 0, 100% 100%, 0 100%, 0 0, 50% 50%); }
+            100% { clip-path: circle(50% at 50% 50%); }
+        }
+        @keyframes moveGhost {
+            0% { left: 100%; }
+            100% { left: -50px; }
+        }
+        /* Media queries para responsive */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 1.5em;
+            }
+            .container {
+                padding: 20px;
+                width: 95%;
+            }
+            .option {
+                padding: 12px;
+            }
+            .pacman {
+                width: 40px;
+                height: 40px;
+            }
+            .ghost {
+                width: 30px;
+                height: 30px;
+            }
+        }
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 1.3em;
+                margin-bottom: 20px;
+            }
+            .container {
+                padding: 15px;
+            }
+            .option {
+                padding: 10px;
+                font-size: 0.9em;
+            }
+            .start-button, .submit-button {
+                padding: 10px 20px;
+                font-size: 1em;
+            }
+            .pacman-game {
+                height: 200px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Audio para reproducción en el fondo (principal) -->
+    <audio id="backgroundMusic" loop autoplay>
+        <source src="fondo.mp3" type="audio/mp3">
+        Tu navegador no soporta el elemento de audio.
+    </audio>
+
+    <div class="container">
+        <h1>¿Aracely estás lista para tu regalo de cumpleaños?</h1>    
+        
+        <div id="start-screen" class="active">
+            <p>Pues para recibir tu regalo no se te hara tan fácil, que creias xd. Ahora jugaremos un juego....</p>
+            <button class="start-button" onclick="startQuiz()">¡Comenzar!</button>
+        </div>
+
+        <div id="question1" class="question-container">
+            <h2>Pregunta 1</h2>
+            <p>¿Cuál es el verdadero nombre de Bruno mars?</p>
+            <img src="espera.gif" alt="Gif de espera">
+            <div class="option" onclick="checkAnswer(1, this, 'Peter Gene Hernández')">Peter Gene Hernández</div>
+            <div class="option" onclick="checkAnswer(1, this, 'Bruno torres')">Bruno torres</div>
+            <div class="option" onclick="checkAnswer(1, this, 'Michael Jr.')">Michael Jr.</div>
+        </div>
+
+        <div id="question2" class="question-container">
+            <h2>Pregunta 2</h2>
+            <p>¿Quién dice la frase: UNAGI ?</p>
+            <img src="giphy (1).gif" alt="Gif UNAGI">
+            <div class="option" onclick="checkAnswer(2, this, 'Chandler')">Chandler</div>
+            <div class="option" onclick="checkAnswer(2, this, 'Ross')">Ross</div>
+            <div class="option" onclick="checkAnswer(2, this, 'Phoebe')">Phoebe</div>
+        </div>
+
+        <div id="question3" class="question-container">
+            <h2>Pregunta 3</h2>
+            <p>Completa la canción: Es hora ya de dragon tales, Ven aquí, sigueme....</p>
+            <img src="dragon.gif" alt="Gif de Dragon Tales">
+            <div class="option" onclick="checkAnswer(3, this, 'a romper ventanas')">a romper ventanas</div>
+            <div class="option" onclick="checkAnswer(3, this, 'A la tierra del dragón')">A la tierra del dragón</div>
+            <div class="option" onclick="checkAnswer(3, this, 'Bazinga')">Bazinga</div>
+        </div>
+
+        <div id="pacman-intro" class="question-container">
+            <h2>¡Bien hecho! Ahora espera un momento...</h2>
+            <p>Te dije que no seria facil, ahora debes jugar algo y obvio ganar gil!</p>
+            <button class="submit-button" onclick="showPacmanGame()">¡Seguir!</button>
+        </div>
+
+        <div id="pacman-game" class="pacman-game">
+            <div class="pacman"></div>
+            <!-- Ghosts and dots serán añadidos por JavaScript -->
+        </div>
+
+        <div id="result" class="result-container">
+            <h2>¡Llegaste al final de mi desafio!</h2>
+            <p>Haz click aqui para recibir tu regalo.</p>
+            <button class="submit-button" onclick="redirectToGift()">Ver mi regalo</button>
+        </div>
+    </div>
+
+    <script>
+        let correctAnswers = {
+            1: "Peter Gene Hernández",
+            2: "Ross",
+            3: "A la tierra del dragón"
+        };
+        
+        // Iniciar música de fondo al cargar la página
+        window.onload = function() {
+            const backgroundMusic = document.getElementById('backgroundMusic');
+            
+            // Intentar reproducir la música cuando el usuario interactúa con la página
+            document.addEventListener('click', function() {
+                backgroundMusic.play().catch(e => {
+                    console.log("Error reproduciendo música automáticamente:", e);
+                });
+            }, { once: true });
+        };
+        
+        function startQuiz() {
+            document.getElementById('start-screen').style.display = 'none';
+            document.getElementById('question1').classList.add('active');
+            
+            // Asegurar que la música está reproduciéndose
+            const backgroundMusic = document.getElementById('backgroundMusic');
+            backgroundMusic.play().catch(e => {
+                console.log("Error reproduciendo música automáticamente:", e);
+            });
+        }
+        
+        function checkAnswer(questionNumber, selectedOption, answer) {
+            if (answer === correctAnswers[questionNumber]) {
+                // Respuesta correcta
+                document.getElementById('question' + questionNumber).classList.remove('active');
+                
+                if (questionNumber < 3) {
+                    // Siguiente pregunta
+                    document.getElementById('question' + (questionNumber + 1)).classList.add('active');
+                } else {
+                    // Todas las preguntas respondidas correctamente
+                    document.getElementById('pacman-intro').classList.add('active');
+                }
+            } else {
+                // Respuesta incorrecta - mostrar mensaje en alerta
+                alert("¡Respuesta incorrecta! Oe esta facil pues.");
+            }
+        }
+        
+        function showPacmanGame() {
+            // Redirect to juego.html instead of showing the Pac-Man game
+            window.location.href = 'juego.html';
+        }
+        
+        // Nueva función para redirigir a la página de regalo
+        function redirectToGift() {
+            window.location.href = 'regalo.html';
+        }
+    </script>
+</body>
+</html>
